@@ -60,10 +60,18 @@ Windows 也可直接双击根目录的 `启动物体识别Demo.bat`（自动探�
 
 ## 协作方式
 
+- **任务看板**：[Issues #1–#12](https://github.com/wdzgdh/object-recognition-demo/issues)，每个任务一个 issue，编号 A1–A6 / B1–B6
 - 主干 `main` 只接收 PR，禁止直接 push
 - 一个 issue = 一个分支 = 一个 PR（≤ 400 行）
 - 交叉评审：A 的 PR 由 B approve，B 的 PR 由 A approve
 - 文件所有权见 [docs/DIVISION.md](docs/DIVISION.md#2-文件所有权表唯一权威)
+
+| 标签 | 含义 |
+|---|---|
+| `owner:A` / `owner:B` | 负责人（界面可视化 / 算法语音数据） |
+| `wave:1` `wave:2` `wave:3` | 波次，同波次内可完全并行 |
+| `P0` / `P1` / `P2` | 严重度：演示会挂 / 影响体验 / 观感 |
+| `contract` | 涉及跨人接口，改动需先改 `docs/CONTRACT.md` |
 
 ## 合规与安全
 

@@ -105,23 +105,25 @@ scope: ui | core | speech | library | camera | tools | docs
 
 ## 7. 各自的任务看板
 
+> 编号括号内是 GitHub issue，进度以 issue 勾选为准，不要在文档里重复维护状态。
+
 ### A 线
 
-- [ ] **A1** 语音闭环（3 h）
-- [ ] **A2** Top-3 条形图 + 未知徽标（4 h）
-- [ ] **A3** 缩略图 + 库管理（4 h）
-- [ ] **A4** 叠层 + 历史（5 h，等 B4）
-- [ ] **A5** 启动闪屏 + 全屏 + 快捷键（4 h）
-- [ ] **A6** 演示脚本 + 截图（3 h）
+- [ ] **A1** 语音闭环（3 h，[#1](https://github.com/wdzgdh/object-recognition-demo/issues/1)）
+- [ ] **A2** Top-3 条形图 + 未知徽标（4 h，[#2](https://github.com/wdzgdh/object-recognition-demo/issues/2)）
+- [ ] **A3** 缩略图 + 库管理（4 h，[#3](https://github.com/wdzgdh/object-recognition-demo/issues/3)）
+- [ ] **A4** 叠层 + 历史（5 h，[#4](https://github.com/wdzgdh/object-recognition-demo/issues/4)，等 B4）
+- [ ] **A5** 启动闪屏 + 全屏 + 快捷键（4 h，[#5](https://github.com/wdzgdh/object-recognition-demo/issues/5)）
+- [ ] **A6** 演示脚本 + 截图（3 h，[#6](https://github.com/wdzgdh/object-recognition-demo/issues/6)）
 
 ### B 线
 
-- [ ] **B1** 启动器 + 配置（2 h）
-- [ ] **B2** 特征库健壮性（4 h）
-- [ ] **B3** 语音基础设施（6 h）
-- [ ] **B4** 推理线程化（5 h）
-- [ ] **B5** 识别质量（5 h）
-- [ ] **B6** 批量工具与评测（6 h）
+- [ ] **B1** 启动器 + 配置（2 h，[#7](https://github.com/wdzgdh/object-recognition-demo/issues/7)）
+- [ ] **B2** 特征库健壮性（4 h，[#8](https://github.com/wdzgdh/object-recognition-demo/issues/8)）
+- [ ] **B3** 语音基础设施（6 h，[#9](https://github.com/wdzgdh/object-recognition-demo/issues/9)）
+- [ ] **B4** 推理线程化（5 h，[#10](https://github.com/wdzgdh/object-recognition-demo/issues/10)）
+- [ ] **B5** 识别质量（5 h，[#11](https://github.com/wdzgdh/object-recognition-demo/issues/11)）
+- [ ] **B6** 批量工具与评测（6 h，[#12](https://github.com/wdzgdh/object-recognition-demo/issues/12)）
 
 ---
 

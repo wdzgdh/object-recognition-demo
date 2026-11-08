@@ -66,11 +66,23 @@
 ### 3.3 汇合点（唯一的两处，必须按顺序）
 
 ```
-B4 ──► A4        B3 ──►（A1 可选增强：边说边出字幕）
+B4 ──► A4        B2 ──► A3（软依赖，可用占位实现先合）
 ```
 
 - **A4 依赖 B4**：A4 需要 `InferWorker.result/latency` 信号。B4 先合，A4 再拉最新 main。
+- **A3 软依赖 B2**：缩略图需要 `thumb_paths()`。B2 未合时 A3 用「名称首字」占位块，不阻塞。
 - B3 是可选增强：A1 用现有 one-shot STT 即可完成闭环，不阻塞。
+
+### 3.4 Issue 索引（GitHub 看板）
+
+| 任务 | Issue | 任务 | Issue |
+|---|---|---|---|
+| A1 语音闭环 | [#1](https://github.com/wdzgdh/object-recognition-demo/issues/1) | B1 启动器与配置 | [#7](https://github.com/wdzgdh/object-recognition-demo/issues/7) |
+| A2 结果可视化 | [#2](https://github.com/wdzgdh/object-recognition-demo/issues/2) | B2 特征库健壮性 | [#8](https://github.com/wdzgdh/object-recognition-demo/issues/8) |
+| A3 缩略图 | [#3](https://github.com/wdzgdh/object-recognition-demo/issues/3) | B3 语音基础设施 | [#9](https://github.com/wdzgdh/object-recognition-demo/issues/9) |
+| A4 叠层与历史 | [#4](https://github.com/wdzgdh/object-recognition-demo/issues/4) | B4 推理线程化 | [#10](https://github.com/wdzgdh/object-recognition-demo/issues/10) |
+| A5 启动体验 | [#5](https://github.com/wdzgdh/object-recognition-demo/issues/5) | B5 识别质量 | [#11](https://github.com/wdzgdh/object-recognition-demo/issues/11) |
+| A6 演示与截图 | [#6](https://github.com/wdzgdh/object-recognition-demo/issues/6) | B6 批量与评测 | [#12](https://github.com/wdzgdh/object-recognition-demo/issues/12) |
 
 ---
 
@@ -78,9 +90,9 @@ B4 ──► A4        B3 ──►（A1 可选增强：边说边出字幕）
 
 | 波次 | 时长 | A 线 | B 线 | 合并门禁 |
 |---|---|---|---|---|
-| **W0 基座** | 已完成 | — | — | 文档、CI、模板、契约已入库 |
-| **W1** | 1.5 天 | A1 → A2 → A3 | B1 → B2 | 每个 PR 单独可跑，不改对方文件 |
-| **W2** | 2 天 | A4（待 B4）→ A5 | B3 → B4 → B5 | B4 合入当天通知 A 拉取 |
+| **W0 基座** | 已完成 | — | — | 文档、模板、契约已入库 |
+| **W1** | 1.5 天 | A1 → A2 → A3 | B1 → B2 → B3 | 每个 PR 单独可跑，不改对方文件 |
+| **W2** | 2 天 | A4（待 B4）→ A5 | B4 → B5 | B4 合入当天在 #10 贴接线示例并 @A |
 | **W3** | 1 天 | A6 + 联调 | B6 + 联调 | 全部指标复测，出评测 CSV |
 | **W4** | 0.5 天 | 报告数据回填 | 报告截图/表格 | 报告定稿 |
 

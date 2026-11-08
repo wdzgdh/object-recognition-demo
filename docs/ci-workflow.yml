@@ -1,0 +1,46 @@
+# CI 工作流模板
+#
+# 用法（二选一）：
+# 1) 网页端：GitHub → Add file → Create new file → 路径填 `.github/workflows/ci.yml`，
+#    把下面的内容整体粘贴进去，提交。
+# 2) 命令行：先给 token 补 workflow 权限，再推
+#      gh auth refresh -h github.com -s workflow
+#      git add .github/workflows/ci.yml && git commit -m "ci: 启用 lint 与编译检查" && git push
+#
+# 说明：推送 `.github/workflows/*` 需要 token 具备 `workflow` scope，
+# 普通 `repo` scope 会被 GitHub 拒绝（本次初始化时就遇到了）。
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-compile:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest
+
+      - name: Lint (ruff)
+        run: ruff check object_recognition tests tools --output-format=github
+        continue-on-error: false
+
+      - name: Compile check (no torch needed)
+        run: python -m compileall -q object_recognition tests tools
+
+      - name: Pure-python unit tests
+        run: |
+          if (Test-Path tests) { python -m pytest tests -q } else { echo "no tests yet" }
+        shell: pwsh

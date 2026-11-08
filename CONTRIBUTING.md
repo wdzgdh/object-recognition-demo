@@ -50,6 +50,10 @@ PR 模板会自动带出检查项。合并需满足：
 
 `.github/workflows/ci.yml` 只做两件事：`ruff check` 和 `python -m compileall`。
 
+> ⚠️ **首次启用 CI**：推送 `.github/workflows/*` 需要 token 具备 `workflow` scope，普通 `repo` scope 会被拒。模板内容见 [`docs/ci-workflow.yml`](docs/ci-workflow.yml)，启用方式二选一：
+> - 网页端：Add file → 路径 `.github/workflows/ci.yml` → 粘贴模板内容 → 提交
+> - 命令行：`gh auth refresh -h github.com -s workflow` 后 `git add .github/workflows/ci.yml && git push`
+
 **不装 torch**（Runner 上 2 GB 依赖不划算），所以：
 
 - 逻辑必须能在**纯 Python** 下测：检索打分、意图解析、评测指标 → 放 `tests/`
