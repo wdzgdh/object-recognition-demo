@@ -1,11 +1,20 @@
 # 加入协作：三条可直接复制的消息
 
-仓库已公开：**https://github.com/wdzgdh/object-recognition-demo**
+仓库已开源（MIT，公开）：**https://github.com/wdzgdh/object-recognition-demo**
 
 下面三段按顺序用：
 1. 发给对方本人（微信/QQ 直接粘贴）
-2. 等对方接受邀请后，把「加入包」发给他
+2. 等对方能推代码后，把「加入包」发给他
 3. 让对方把「开工提示词」整段粘给他的 AI 助手（WorkBuddy / Claude / Cursor 都行）
+
+## 0. 两种加入方式，选一种
+
+| 方式 | 适用 | 操作 |
+|---|---|---|
+| **A. 给写权限**（推荐，两个人最省事） | 对方是你的搭档，两人都能直推分支 | 你把对方 GitHub 用户名告诉我，我邀请；或你自己点 Settings → Collaborators → Add people |
+| **B. Fork + PR**（开源标准流程） | 不想给写权限，或对方只是想提改动 | 对方 Fork → 在自己的 fork 上开分支 → 向 main 提 PR |
+
+方式 A 下，对方收到邀请邮件后点接受即可；方式 B 不需要邀请，现在就能开始。
 
 ---
 
@@ -18,8 +27,9 @@
 > 你负责 B 线（算法、语音、数据），我走 A 线（界面、可视化）。
 > 现在把 12 个 issue 全建好了，从 wave:1 开始领：#7 #8 #9。
 >
-> 你先点这个链接加协作者：https://github.com/wdzgdh/object-recognition-demo/invitations
-> 加完 clone 下来跑一遍 `python main.py` 能起界面，就说明环境通了。
+> 你先加进来：如果是收到我的仓库邀请，点邮件里的 Accept；
+> 没收到就直接打开 https://github.com/wdzgdh/object-recognition-demo 点 Fork，一样能开工。
+> 通环境的标准就一个：clone 下来 `python main.py` 能起界面。
 
 ---
 
