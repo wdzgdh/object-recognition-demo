@@ -1,0 +1,14 @@
+{
+  "provider": "teleai",
+  "teleai": {
+    "app_id": "",
+    "appkey": "",
+    "apikey": "",
+    "hotwords": ["水杯", "键盘", "保温杯"]
+  },
+  "baidu": {
+    "api_key": "",
+    "secret_key": "",
+    "hotword": ""
+  }
+}

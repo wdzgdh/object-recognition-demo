@@ -1,0 +1,31 @@
+# 物体识别 Demo 依赖清单
+# 安装：pip install -r requirements.txt
+#
+# 注意：本项目代码同时兼容 PySide6 和 PyQt5（优先用 PySide6，
+# 已装 PyQt5 的环境也能直接运行）。二者安装其一即可。
+
+# ---- 深度学习 ----
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ---- 图像处理 ----
+opencv-python>=4.8.0
+
+# ---- 界面（PySide6 与 PyQt5 二选一）----
+PySide6>=6.5.0
+# PyQt5>=5.15.0
+
+# ---- 数值计算 ----
+numpy>=1.24.0
+
+# ---- 语音 ----
+# 麦克风录音（speech_recognition + pyaudio）
+SpeechRecognition>=3.10.0
+# 天翼 AI 开放平台实时语音识别（WebSocket 流式）
+websocket-client>=1.6.0
+# 百度短语音识别备用 + 通用 HTTP
+requests>=2.26.0
+# 麦克风采集（语音识别需要）
+pyaudio>=0.2.13
+# 语音合成（离线 TTS）
+pyttsx3>=2.90
