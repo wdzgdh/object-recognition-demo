@@ -34,6 +34,7 @@ Windows 也可直接双击根目录的 `启动物体识别Demo.bat`（自动探�
 | [docs/PLAN.md](docs/PLAN.md) | 缺陷治理方案：12 个任务、验收指标、时间表 |
 | [docs/DIVISION.md](docs/DIVISION.md) | 两人分工、文件所有权、分支模型、并行规则 |
 | [docs/CONTRACT.md](docs/CONTRACT.md) | A/B 接口契约（签名先定，再各自实现） |
+| [docs/ONBOARDING_PROMPT.md](docs/ONBOARDING_PROMPT.md) | 新人加入的三段话 + 可直接粘给 AI 助手的开工提示词 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 如何提 issue / PR、自测清单、CI 说明 |
 
 ## 仓库结构
@@ -60,6 +61,8 @@ Windows 也可直接双击根目录的 `启动物体识别Demo.bat`（自动探�
 
 ## 协作方式
 
+需要拉人进来？照 [docs/ONBOARDING_PROMPT.md](docs/ONBOARDING_PROMPT.md) 走，里面有三段可直接复制的消息（给本人 / 加入包 / 给对方的 AI 助手）。
+
 - **任务看板**：[Issues #1–#12](https://github.com/wdzgdh/object-recognition-demo/issues)，每个任务一个 issue，编号 A1–A6 / B1–B6
 - 主干 `main` 只接收 PR，禁止直接 push
 - 一个 issue = 一个分支 = 一个 PR（≤ 400 行）
@@ -81,4 +84,6 @@ Windows 也可直接双击根目录的 `启动物体识别Demo.bat`（自动探�
 
 ## 许可
 
-课程作业用途。预训练权重版权归 torchvision / ImageNet 原作者。
+本项目以 [MIT License](LICENSE) 开源，欢迎 fork、提 issue 与 PR。
+
+预训练权重由 torchvision 提供，版权归 PyTorch / ImageNet 原作者；仅使用公开权重与自采集图片，不伪造实验结果。
