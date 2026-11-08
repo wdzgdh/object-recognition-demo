@@ -86,4 +86,8 @@ Windows 也可直接双击根目录的 `启动物体识别Demo.bat`（自动探�
 
 本项目以 [MIT License](LICENSE) 开源，欢迎 fork、提 issue 与 PR。
 
-预训练权重由 torchvision 提供，版权归 PyTorch / ImageNet 原作者；仅使用公开权重与自采集图片，不伪造实验结果。
+第三方组件声明：
+
+- ResNet18 预训练权重由 torchvision 提供，版权归 PyTorch 与 ImageNet 原作者，遵循其各自许可（BSD-3-Clause / ImageNet Terms）
+- PySide6 / PyQt5、OpenCV、SpeechRecognition、pyttsx3 等依赖遵循各自许可证
+- 本项目仅使用公开预训练权重与自采集图片，不伪造实验结果

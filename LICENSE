@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-第三方组件声明：
-- torchvision 提供的 ResNet18 预训练权重，版权归 PyTorch 及 ImageNet 原作者，
-  遵循其各自的许可条款（BSD-3-Clause / ImageNet Terms）。
-- PySide6 / PyQt5、OpenCV、SpeechRecognition、pyttsx3 等依赖遵循各自许可证。
