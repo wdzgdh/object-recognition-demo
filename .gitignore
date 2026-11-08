@@ -1,0 +1,38 @@
+# ===== 敏感凭证：绝不提交 =====
+# 项目内配置文件（可能被人手动填入密钥，统一排除，改用 example 模板提交）
+object_recognition/asr_config.json
+
+# 加密/明文凭证文件
+*.bin
+*.key
+*.pem
+.env
+.env.*
+!.env.example
+
+# 百度 token 缓存（含 access_token）
+object_recognition/data/.baidu_token.json
+
+# ===== 运行时数据 / 缓存 =====
+# 注意：特征库 library.json / library_feats.npy **不排除**，
+# 它们是作业数据（只含物体名和特征向量，无密钥），需要随代码提交以便换设备不丢失。
+# 协作约定：data/ 只由 A 提交，B 的 PR 不得包含 data/ 变更（见 docs/DIVISION.md）。
+# 如需把特征库放到云盘目录，用环境变量 OBJECT_REC_LIBRARY_DIR。
+object_recognition/data/*.zip
+__pycache__/
+*.py[cod]
+*.pyc
+
+# ===== 中间产物 =====
+output/
+*.wav
+*.log
+
+# ===== 协作 / 工具链 =====
+.workbuddy/
+.idea/
+.vscode/
+.pytest_cache/
+.ruff_cache/
+Thumbs.db
+desktop.ini

@@ -1,0 +1,24 @@
+# 文本文件统一换行，避免 Windows/Linux 协作者产生整文件 diff
+* text=auto eol=lf
+
+# 脚本与批处理保留各自换行
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制：不参与文本 diff，避免协作时互相覆盖出乱码
+*.npy binary
+*.npz binary
+*.pt binary
+*.pth binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.bmp binary
+*.zip binary
+*.docx binary
+*.mp3 binary
+*.wav binary
+
+# 特征库数据以 A 的提交为准（见 docs/DIVISION.md 所有权表）。
+# 这里只标 binary，不用自定义 merge driver，避免协作者未配置 driver 时合并报错。
