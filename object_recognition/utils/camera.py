@@ -12,9 +12,12 @@ OpenCV 的 cv2.VideoCapture 既接受整数索引（本地摄像头），也接�
 """
 import socket
 import time
+from collections import deque
 from urllib.parse import urlparse
 
 import cv2
+
+import config
 
 # 兼容 PyQt5 / PySide6
 try:
@@ -79,6 +82,46 @@ class CameraThread(QThread):
         self._running = False
         self.active_source = None   # 实际生效的视频源
 
+        # ---- 帧率统计与限流（对应缺陷 P0-2：UI 忙时不再无限积压）----
+        self._max_fps = max(1, int(getattr(config, "CAMERA_FPS", 30)))
+        self._min_interval = 1.0 / self._max_fps
+        self._last_emit = 0.0
+        self._stamps = deque(maxlen=30)
+        self._fps = 0.0
+        self._dropped = 0
+        self._latest = None
+
+    # ---------- 对外只读属性 ----------
+    @property
+    def fps(self):
+        """最近的采集帧率（供界面叠层显示）。"""
+        return self._fps
+
+    @property
+    def dropped(self):
+        """因超过帧率上限被丢掉的帧数。"""
+        return self._dropped
+
+    @property
+    def latest_frame(self):
+        """最近一次发出的 BGR 帧（未发出过则为 None）。"""
+        return self._latest
+
+    def _emit_frame(self, frame):
+        """限流后发出帧：超过 CAMERA_FPS 上限的帧直接丢弃并计数。"""
+        now = time.time()
+        if self._last_emit and (now - self._last_emit) < self._min_interval * 0.95:
+            self._dropped += 1
+            return
+        self._last_emit = now
+        self._latest = frame
+        self._stamps.append(now)
+        if len(self._stamps) >= 2:
+            span = self._stamps[-1] - self._stamps[0]
+            if span > 0:
+                self._fps = (len(self._stamps) - 1) / span
+        self.frame_bgr.emit(frame)
+
     # ---------- 打开视频源 ----------
     def _open(self, source):
         """尝试打开一个视频源并试读一帧。返回 (cap, first_frame) 或 (None, None)。"""
@@ -130,7 +173,7 @@ class CameraThread(QThread):
 
         self._running = True
         if frame is not None:
-            self.frame_bgr.emit(frame)
+            self._emit_frame(frame)
 
         reconnects = 0
         try:
@@ -138,7 +181,7 @@ class CameraThread(QThread):
                 ret, frame = cap.read()
                 if ret and frame is not None:
                     reconnects = 0
-                    self.frame_bgr.emit(frame)
+                    self._emit_frame(frame)
                     continue
 
                 # 读帧失败：网络流尝试重连，本地设备直接结束
