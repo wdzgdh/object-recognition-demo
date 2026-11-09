@@ -69,34 +69,60 @@ self.infer.stop()                                   # 关
 
 ## 2. `Speech` 扩展（B 交付，A 调用）
 
-现有 `recognize_speech_async(callback, timeout)` 保留签名兼容，新增可选参数与两个方法。
+`recognize_speech(callback)` 老签名保持不变；下面是**已交付**的接口（B3）。
+
+**推荐写法：一次聆听 = 一个句柄**
 
 ```python
 class Speech:
-    def recognize_speech_async(
+    def listen(
         self,
-        callback: Callable[[str | None, str | None], None],   # (text, error_code)
-        timeout: float = 8.0,
-        on_level: Callable[[float], None] | None = None,      # 0.0~1.0 实时音量，约 20 Hz
-        on_partial: Callable[[str], None] | None = None,      # 云端增量文本
-        cancel_event: "threading.Event | None" = None,        # set() 即中止录音/上传
-    ) -> None: ...
+        on_final: Callable[[str], None] | None = None,          # 最终文本
+        on_level: Callable[[float], None] | None = None,        # 0.0~1.0 音量，约 12 Hz
+        on_partial: Callable[[str], None] | None = None,        # 云端增量文本（仅流式后端）
+        on_error: Callable[[str], None] | None = None,          # "no_mic"/"timeout"/"cancelled"/...
+        timeout: float | None = None,                           # 等开口的最长秒数
+        phrase_limit: float | None = None,                      # 单句最长秒数
+        vad: bool = True,                                       # 按音量自动断句
+    ) -> ListenHandle: ...
 
-    def cancel(self) -> None:
-        """中止当前聆听（等同 set(cancel_event)）。可重复调用。"""
-
-    def speak_result(self, name: str, is_unknown: bool) -> None:
-        """按语义播报：未知 →「我不认识这个东西」；已知 →「这是{name}」。"""
-
+class ListenHandle:
+    def cancel(self) -> None: ...      # 幂等，任意线程可调；最坏 ~100 ms 停下
+    def wait(self, timeout=None) -> bool: ...
     @property
-    def backend_status(self) -> str:
-        """保持现有的 backend_status() 方法不变，不要改签名。"""
+    def cancelled(self) -> bool: ...
+    @property
+    def active(self) -> bool: ...      # False = 已结束（回调也都跑完了）
+    reason: str | None                # "ok" / "cancelled" / 错误码
 ```
 
+**契约兼容写法（如果你已经按老契约写好了，不用改）**
+
+```python
+def recognize_speech_async(callback, timeout=8.0,
+                           on_level=None, on_partial=None,
+                           cancel_event=None) -> ListenHandle
+def cancel() -> None                       # 中止当前聆听
+def speak_result(name: str, is_unknown: bool) -> bool
+```
+
+`recognize_speech_async` 现在是 `listen()` 的薄包装：`on_final → callback(text, None)`、
+`on_error → callback(None, code)`，`cancel_event` 由后台线程监听，set() 即取消。
+
 **约束**
-- `on_level` / `on_partial` 都在**工作线程**回调，A 必须用 Qt 信号切回主线程再更新控件（沿用现有 `stt_result` 模式）。
-- `cancel()` 后必须回调 `callback(None, "cancelled")`，A 据此恢复按钮状态。
-- 错误码新增 `"cancelled"`，其余码不变。
+- 所有回调都在**工作线程**执行，A 必须用 Qt 信号切回主线程再更新控件（沿用现有 `stt_result` 模式）。
+- 取消后必定回调 `callback(None, "cancelled")` / `on_error("cancelled")`，A 据此恢复按钮状态。
+- 「停止」的语义是**保留已经听到的部分**：若在说话中途取消，已识别出的文本仍会通过
+  `on_final` / `callback(text, None)` 送回来，`handle.reason == "cancelled"` 便于区分。
+- 错误码在原有基础上新增 `"cancelled"`，其余不变。
+
+**TTS（B3 改进，签名向后兼容）**
+
+```python
+speak(text, dedupe=True, interrupt=False) -> bool   # 返回是否真的入队
+stop_speaking() -> None                             # 立刻闭嘴 + 清空队列
+tts_stats -> {"inits": int, "last_error": str|None, "pending": int}
+```
 
 ---
 
@@ -153,6 +179,15 @@ class FeatureLibrary:
 | `SMOOTH_N` | int | `3` | 连续 N 帧一致才上屏 | B5 |
 | `INFER_INTERVAL_MS` | int | `150` | 推理间隔（比旧的 300 ms 更快，因为已不阻塞 UI） | B4 |
 | `THRESHOLD_STORE` | str | `data/ui_state.json` | 阈值持久化位置 | B1 |
+| `STT_STREAMING` | bool | `True` | 有流式后端时边录边推 | B3 |
+| `AUDIO_CHUNK_MS` | int | `100` | 每次读麦克风的块长，也是"停止"的最坏延迟 | B3 |
+| `VAD_START_LEVEL` | float | `0.02` | RMS 音量到达此值算开始说话 | B3 |
+| `VAD_SILENCE_LEVEL` | float | `0.012` | 低于此值算静音 | B3 |
+| `VAD_SILENCE_MS` | int | `700` | 连续静音多久判定说完 | B3 |
+| `LEVEL_INTERVAL_MS` | int | `80` | `on_level` 回调节流间隔 | B3 |
+| `TTS_RATE` | int | `180` | 语速 | B3 |
+| `TTS_REUSE_ENGINE` | bool | `True` | 复用 TTS engine；某机器第二句不出声就改 `False` | B3 |
+| `TTS_QUEUE_MAX` | int | `4` | 待播队列上限，超出丢最旧 | B3 |
 
 **A 侧读法（必须这么写，保证 B1 未合入时也能跑）**
 

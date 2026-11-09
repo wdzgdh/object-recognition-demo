@@ -83,6 +83,22 @@ STT_TIMEOUT = 8.0        # 等待说话的最长秒数
 STT_PHRASE_LIMIT = 6.0   # 单次录音最长秒数
 # 语音合成：pyttsx3 离线 TTS（SAPI5），由 speech.py 的常驻线程驱动
 
+# ---- 流式录音 / VAD（B3）----
+# 边录边推：有流式后端（天翼 WebSocket）时，说完立刻出结果，不用等整段上传。
+STT_STREAMING = True
+AUDIO_CHUNK_MS = 100        # 每次从麦克风读多长（毫秒）；也是"停止"的最坏响应延迟
+VAD_START_LEVEL = 0.02      # RMS 音量达到这个值算"开始说话"（0~1，安静房间约 0.005）
+VAD_SILENCE_LEVEL = 0.012   # 低于这个值算静音
+VAD_SILENCE_MS = 700        # 连续静音多久判定"说完了"
+LEVEL_INTERVAL_MS = 80      # on_level 音量回调的节流间隔（UI 画音量条够用）
+
+# ---- TTS ----
+TTS_RATE = 180
+# True = 复用同一个 pyttsx3 engine（省掉每次 init 的 100~300ms 语音枚举开销）。
+# 若某些机器上复用后第二句不出声，把它改成 False 即可回到"每句新建 engine"。
+TTS_REUSE_ENGINE = True
+TTS_QUEUE_MAX = 4           # 待播队列上限，超出丢最旧的，避免"排队排到天荒地老"
+
 # ---- 在线 ASR 凭证 ----
 # 凭证读取优先级：环境变量 > 本地配置文件 asr_config.json
 # 该文件含密钥，不要公开 / 提交到代码仓库。
