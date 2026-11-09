@@ -188,3 +188,220 @@ class TeleAIASR:
                     ws.close()
                 except Exception:
                     pass
+
+
+class TeleAIStream:
+    """单句流式识别会话：start() → push(pcm) 多次 → finish()。
+
+    与 `TeleAIASR.recognize(wav_path)` 的区别：
+        recognize() 是「先录完再上传」，用户说完还要等整段上传完才出结果；
+        本类边录边发，**停止说话的同时服务端已经在算最后一段**，
+        2 秒的短句端到端通常在 0.5~1.2 s 内返回（实测取决于网络）。
+
+    线程约束：一个实例只能在一个线程里用（内部只有一个 WebSocket）。
+    典型用法（在录音线程里）：
+
+        stream = TeleAIStream(asr, on_partial=cb)
+        stream.start()
+        while 录音中:
+            stream.push(chunk)          # 顺带把中间结果回调出去
+        text, err = stream.finish()
+
+    取消（用户点了"停止"）：直接 `stream.cancel()`，会发结束帧并关连接，
+    已识别到的部分结果仍可通过 `partial_text` 取回。
+    """
+
+    def __init__(self, client, on_partial=None):
+        self.client = client
+        self.on_partial = on_partial
+        self._ws = None
+        self._buf = bytearray()
+        self._texts = []          # 已确认的句段（res_status=3/4）
+        self._closed = True
+        self.last_error = None
+
+    # ---------- 状态 ----------
+    @property
+    def active(self):
+        return self._ws is not None and not self._closed
+
+    @property
+    def partial_text(self):
+        return "".join(self._texts)
+
+    # ---------- 生命周期 ----------
+    def start(self):
+        """建连 + 发开始帧 + 等服务端就绪。失败抛 RuntimeError。"""
+        if websocket is None:
+            raise RuntimeError("未安装 websocket-client")
+        client = self.client
+        if not client.apikey:
+            raise RuntimeError("未配置天翼 API Key")
+
+        ws = client._connect()
+        self._ws = ws
+        option = {
+            "sample_rate": client.sample_rate,
+            "format": "pcm",
+            "enable_punctuation": True,
+            "enable_inverse_text_normalization": True,
+        }
+        if client.hotwords:
+            option["hotwords"] = client.hotwords[:1000]
+        client._send(ws, {
+            "req_id": str(uuid.uuid4()),
+            "rec_status": 0,
+            "option": option,
+        })
+
+        deadline = time.time() + client.timeout
+        while time.time() < deadline:
+            msg = client._parse(ws.recv())
+            code = msg.get("code")
+            if code not in (None, 10000, 20003):
+                raise RuntimeError("服务端返回 %s: %s" % (code, msg.get("message", "")))
+            if msg.get("res_status") == 0:
+                self._closed = False
+                return True
+        raise RuntimeError("等待识别就绪超时")
+
+    def push(self, pcm):
+        """推一段裸 PCM（16k/16bit/单声道），返回本次实际发出的块数。
+
+        不足一块（200 ms）时先攒着，攒够再发——避免触发服务端的
+        "Non-real-time audio data" 限速错误。音频本身是实时到达的，
+        所以这里**不需要再 sleep**。
+        """
+        if not self.active or not pcm:
+            return 0
+        self._buf.extend(pcm)
+        sent = 0
+        while len(self._buf) >= CHUNK_BYTES:
+            chunk = bytes(self._buf[:CHUNK_BYTES])
+            del self._buf[:CHUNK_BYTES]
+            self.client._send(self._ws, {
+                "rec_status": 1,
+                "audio_stream": base64.b64encode(chunk).decode("ascii"),
+            })
+            sent += 1
+        self.poll()
+        return sent
+
+    def poll(self, timeout=0.001):
+        """非阻塞收消息，把中间结果（res_status=3）通过 on_partial 抛出去。
+
+        返回本次新增的中间文本；没有新消息返回 None。
+        连接异常会被吞掉并标记为已关闭——录音线程不该因为网络抖动崩掉。
+        """
+        if not self.active:
+            return None
+        client = self.client
+        got = None
+        try:
+            self._ws.settimeout(timeout)
+            try:
+                raw = self._ws.recv()
+            except Exception as e:
+                # 超时 = 没消息，正常；其它异常 = 连接坏了
+                if "Timeout" not in type(e).__name__:
+                    self._mark_closed(str(e))
+                return None
+            if not raw:
+                return None
+            msg = client._parse(raw)
+            code = msg.get("code")
+            if code not in (None, 10000, 20003):
+                self.last_error = "%s: %s" % (code, msg.get("message", ""))
+                return None
+            status = msg.get("res_status")
+            if status in (3, 4):
+                got = self._absorb(msg)
+            if status == 4:
+                self._mark_closed(None)
+        except Exception as e:
+            self._mark_closed(str(e))
+        return got
+
+    def finish(self, timeout=None):
+        """发结束帧并收最终文本。返回 (text, error)。"""
+        if not self.active:
+            text = self.partial_text
+            return (text, None) if text else (None, self.last_error or "连接已关闭")
+        client = self.client
+        try:
+            if self._buf:                      # 把不足一块的尾巴补发，别丢字
+                self.client._send(self._ws, {
+                    "rec_status": 1,
+                    "audio_stream": base64.b64encode(bytes(self._buf)).decode("ascii"),
+                })
+                self._buf.clear()
+            client._send(self._ws, {"rec_status": 2})
+
+            deadline = time.time() + (timeout or max(client.timeout, 8.0))
+            while time.time() < deadline:
+                try:
+                    self._ws.settimeout(deadline - time.time())
+                    raw = self._ws.recv()
+                except Exception:
+                    break
+                msg = client._parse(raw)
+                code = msg.get("code")
+                if code not in (None, 10000, 20003):
+                    self.last_error = "识别错误 %s: %s" % (code, msg.get("message", ""))
+                    break
+                status = msg.get("res_status")
+                if status in (3, 4):
+                    self._absorb(msg)
+                if status == 4:
+                    break
+        except Exception as e:
+            self.last_error = "%s: %s" % (type(e).__name__, str(e)[:160])
+        finally:
+            self.cancel()
+
+        text = self.partial_text
+        if text:
+            return text, None
+        return None, self.last_error or "云端未返回识别文本"
+
+    def cancel(self):
+        """用户主动停止：发结束帧（尽力而为）后关闭连接，部分结果保留。"""
+        if self._ws is not None:
+            if not self._closed:
+                try:
+                    self.client._send(self._ws, {"rec_status": 2})
+                except Exception:
+                    pass
+            try:
+                self._ws.close()
+            except Exception:
+                pass
+        self._closed = True
+        return self.partial_text
+
+    # ---------- 内部 ----------
+    def _absorb(self, msg):
+        """把一帧里的 results 并入文本缓冲，返回本次新增的中间文本。"""
+        added = []
+        for item in (msg.get("data") or {}).get("results") or []:
+            t = (item.get("text") or "").strip()
+            if not t:
+                continue
+            if t in self._texts:
+                continue
+            added.append(t)
+            self._texts.append(t)
+        if not added:
+            return None
+        text = "".join(self._texts)
+        if self.on_partial:
+            try:
+                self.on_partial(text)
+            except Exception:
+                pass
+        return "".join(added)
+
+    def _mark_closed(self, reason):
+        if reason:
+            self.last_error = reason
+        self._closed = True
