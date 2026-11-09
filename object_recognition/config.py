@@ -157,6 +157,61 @@ def load_asr_keys():
     return key, secret, hotword
 
 
+# ---- 实时推理 ----
+# 推理已从 GUI 线程移到 InferWorker 工作线程，因此间隔可以更短；
+# 主线程不再被前向计算阻塞，150ms 也不会卡界面。
+INFER_INTERVAL_MS = 150
+
+# ---- 界面行为（A 线用 getattr 兜底读取，键名见 docs/CONTRACT.md 第 5 节）----
+AUTO_SPEAK = True          # 识别成功后自动语音播报
+HISTORY_MAX = 20           # 结果历史保留条数
+SHOW_OVERLAY = True        # 预览左上角显示 FPS / 推理耗时 / 结果
+
+# ---- 识别质量 ----
+ROI_RATIO = 0.75           # 中心 ROI 裁切比例，1.0 表示不裁（注册与实时走同一路径）
+SMOOTH_N = 3               # 实时结果连续 N 帧一致才上屏，抑制名称跳动
+
+# ---- 持久化的界面状态 ----
+THRESHOLD_STORE = os.path.join(DATA_DIR, "ui_state.json")
+
+
+def load_ui_state():
+    """读取界面状态（阈值等）。文件不存在或损坏时返回 {}，绝不抛异常。"""
+    try:
+        if os.path.exists(THRESHOLD_STORE):
+            with open(THRESHOLD_STORE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return {}
+
+
+def save_ui_state(**kwargs):
+    """合并写入界面状态。返回 True/False，失败不影响程序运行。"""
+    try:
+        data = load_ui_state()
+        data.update(kwargs)
+        os.makedirs(os.path.dirname(THRESHOLD_STORE), exist_ok=True)
+        tmp = THRESHOLD_STORE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, THRESHOLD_STORE)
+        return True
+    except Exception:
+        return False
+
+
+def get_threshold():
+    """取生效阈值：界面保存过就用保存值，否则用默认 THRESHOLD。"""
+    try:
+        v = float(load_ui_state().get("threshold", THRESHOLD))
+    except Exception:
+        return THRESHOLD
+    return min(max(v, 0.05), 0.99)
+
+
 # 确保数据目录与特征库目录都存在（云盘目录可能尚不存在）
 os.makedirs(DATA_DIR, exist_ok=True)
 try:
