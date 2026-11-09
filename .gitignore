@@ -34,6 +34,12 @@ __pycache__/
 output/
 *.wav
 *.log
+# 评测产物默认不入库（可按需 git add -f docs/eval/report.csv 存档基线）
+docs/eval/*.csv
+
+# CI 工作流需 gh 的 workflow scope 才能推送，未授权时先留在本地
+# （模板同时保存在 docs/ci-workflow.yml，授权后自行移入 .github/workflows/）
+.github/workflows/ci.yml
 
 # ===== 协作 / 工具链 =====
 .workbuddy/
