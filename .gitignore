@@ -19,6 +19,13 @@ object_recognition/data/.baidu_token.json
 # 协作约定：data/ 只由 A 提交，B 的 PR 不得包含 data/ 变更（见 docs/DIVISION.md）。
 # 如需把特征库放到云盘目录，用环境变量 OBJECT_REC_LIBRARY_DIR。
 object_recognition/data/*.zip
+# 界面状态（阈值等），每台机器各自一份，不进版本库
+object_recognition/data/ui_state.json
+object_recognition/data/ui_state.json.tmp
+# 单实例锁文件
+object_recognition/data/.library.lock
+# 录入图片的缩略图副本（数量多、体积大，可随时由原图重建）
+object_recognition/data/thumbs/
 __pycache__/
 *.py[cod]
 *.pyc
